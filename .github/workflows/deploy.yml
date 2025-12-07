@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Uncomment and configure when ready to deploy
+    if: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to AWS ECR/ECS
+        run: |
+          echo "TODO: Configure deployment"
+          # Example deployment steps:
+          # - Build and push Docker images to ECR
+          # - Update ECS task definitions
+          # - Deploy to ECS service
+
+      - name: Deploy to Azure
+        run: |
+          echo "TODO: Configure Azure deployment"
+          # Example deployment steps:
+          # - Build and push images to Azure Container Registry
+          # - Deploy to Azure Container Instances or App Service
+
+      - name: Deploy to Fly.io
+        run: |
+          echo "TODO: Configure Fly.io deployment"
+          # Example deployment steps:
+          # - Install flyctl
+          # - Deploy with: flyctl deploy
