@@ -64,12 +64,18 @@ def delete_user(db: Session, user: User) -> User:
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    """Authenticate a user."""
+    """Authenticate a user with email and password."""
     user = get_user_by_email(db, email)
     if not user:
         return None
+
+    # OAuth-only users don't have passwords
+    if not user.hashed_password:
+        return None
+
     if not verify_password(password, user.hashed_password):
         return None
+
     return user
 
 

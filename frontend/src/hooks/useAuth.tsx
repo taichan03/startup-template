@@ -19,15 +19,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadUser = async () => {
-      if (api.isAuthenticated()) {
-        try {
-          const currentUser = await api.getCurrentUser()
-          setUser(currentUser)
-        } catch {
-          setUser(null)
-        }
+      try {
+        // Try to get current user - if successful, user is authenticated
+        const currentUser = await api.getCurrentUser()
+        setUser(currentUser)
+      } catch {
+        // No valid session, user is not authenticated
+        setUser(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     loadUser()

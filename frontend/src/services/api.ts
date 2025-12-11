@@ -13,53 +13,25 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 class ApiClient {
   private baseURL: string
-  private accessToken: string | null = null
-  private refreshToken: string | null = null
 
   constructor(baseURL: string) {
     this.baseURL = baseURL
-    this.loadTokens()
-  }
-
-  private loadTokens() {
-    this.accessToken = localStorage.getItem('access_token')
-    this.refreshToken = localStorage.getItem('refresh_token')
-  }
-
-  private saveTokens(accessToken: string, refreshToken: string) {
-    this.accessToken = accessToken
-    this.refreshToken = refreshToken
-    localStorage.setItem('access_token', accessToken)
-    localStorage.setItem('refresh_token', refreshToken)
-  }
-
-  private clearTokens() {
-    this.accessToken = null
-    this.refreshToken = null
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
   }
 
   private async refreshAccessToken(): Promise<boolean> {
-    if (!this.refreshToken) return false
-
     try {
       const response = await fetch(`${this.baseURL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: this.refreshToken }),
+        credentials: 'include', // Send httpOnly cookies
       })
 
       if (!response.ok) {
-        this.clearTokens()
         return false
       }
 
-      const data: TokenResponse = await response.json()
-      this.saveTokens(data.access_token, data.refresh_token)
       return true
     } catch {
-      this.clearTokens()
       return false
     }
   }
@@ -74,19 +46,23 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     }
 
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`
-    }
-
-    let response = await fetch(url, { ...options, headers })
+    // Always include credentials to send httpOnly cookies
+    let response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include'
+    })
 
     // Handle 401 - try to refresh token
-    if (response.status === 401 && this.refreshToken) {
+    if (response.status === 401) {
       const refreshed = await this.refreshAccessToken()
       if (refreshed) {
-        // Retry request with new token
-        headers['Authorization'] = `Bearer ${this.accessToken}`
-        response = await fetch(url, { ...options, headers })
+        // Retry request with new token (now in cookie)
+        response = await fetch(url, {
+          ...options,
+          headers,
+          credentials: 'include'
+        })
       } else {
         throw new Error('Session expired. Please log in again.')
       }
@@ -125,13 +101,26 @@ class ApiClient {
       body: formData,
     })
 
-    this.saveTokens(tokens.access_token, tokens.refresh_token)
+    // Tokens are now in httpOnly cookies, no need to store them
     return tokens
   }
 
   async logout(): Promise<void> {
     await this.request('/api/v1/auth/logout', { method: 'POST' })
-    this.clearTokens()
+    // Cookies are cleared by the backend
+  }
+
+  // OAuth endpoints
+  initiateGoogleLogin(): void {
+    // Redirect to backend OAuth endpoint which will redirect to Google
+    window.location.href = `${this.baseURL}/api/v1/auth/google/login`
+  }
+
+  async addPassword(password: string): Promise<User> {
+    return this.request<User>('/api/v1/auth/add-password', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    })
   }
 
   // User endpoints
@@ -207,8 +196,14 @@ class ApiClient {
     })
   }
 
-  isAuthenticated(): boolean {
-    return !!this.accessToken
+  // Check authentication status by attempting to get current user
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      await this.getCurrentUser()
+      return true
+    } catch {
+      return false
+    }
   }
 }
 

@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Cookie settings (set SECURE_COOKIES=True in production with HTTPS)
+    SECURE_COOKIES: bool = False  # Set to True in production (requires HTTPS)
+
     # CORS
     BACKEND_CORS_ORIGINS: Union[list[str], str] = ["http://localhost:5173", "http://localhost:3000"]
 
@@ -39,6 +42,14 @@ class Settings(BaseSettings):
     # Admin
     FIRST_SUPERUSER_EMAIL: str = "admin@example.com"
     FIRST_SUPERUSER_PASSWORD: str = "admin123"
+
+    # OAuth - Google
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+
+    # Frontend URL for OAuth redirects
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # Observability
     LOG_LEVEL: str = "INFO"

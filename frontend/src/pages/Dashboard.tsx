@@ -85,6 +85,19 @@ export function Dashboard() {
               <h1 className="text-xl font-bold">Startup Template</h1>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Profile Picture */}
+              {user?.profile_picture_url ? (
+                <img
+                  src={user.profile_picture_url}
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-medium">
+                  {user?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}
+                </div>
+              )}
               <span className="text-gray-700">{user?.full_name || user?.email}</span>
               {user?.role === 'admin' && (
                 <button

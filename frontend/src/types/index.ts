@@ -7,6 +7,9 @@ export interface User {
   is_verified: boolean
   created_at: string
   updated_at: string
+  oauth_provider: 'local' | 'google' | 'github' | 'microsoft'
+  oauth_provider_id: string | null
+  profile_picture_url: string | null
 }
 
 export interface Project {

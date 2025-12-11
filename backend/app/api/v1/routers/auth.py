@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -6,6 +6,7 @@ from app.schemas.user import UserCreate, User as UserSchema
 from app.schemas.token import Token, RefreshToken
 from app.services import user as user_service
 from app.core.security import create_access_token, create_refresh_token, decode_token
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -34,9 +35,10 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+def login(response: Response, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     """
     OAuth2 compatible token login.
+    Sets httpOnly cookies for secure token storage.
     """
     user = user_service.authenticate_user(db, email=form_data.username, password=form_data.password)
     if not user:
@@ -62,6 +64,27 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
     access_token = create_access_token(subject=str(user.id))
     refresh_token = create_refresh_token(subject=str(user.id))
 
+    # Set httpOnly cookies
+    # Access token: short-lived, httpOnly, secure in production
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.SECURE_COOKIES,  # True in production (requires HTTPS)
+        samesite="lax",  # Protect against CSRF
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convert to seconds
+    )
+
+    # Refresh token: long-lived, httpOnly, secure in production
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=settings.SECURE_COOKIES,  # True in production (requires HTTPS)
+        samesite="lax",  # Protect against CSRF
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,  # Convert to seconds
+    )
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -70,11 +93,20 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
 
 
 @router.post("/refresh", response_model=Token)
-def refresh_token(refresh_data: RefreshToken, db: Session = Depends(get_db)):
+def refresh_token(response: Response, request: Request, db: Session = Depends(get_db)):
     """
-    Refresh access token using refresh token.
+    Refresh access token using refresh token from httpOnly cookie.
     """
-    payload = decode_token(refresh_data.refresh_token)
+    # Get refresh token from cookie
+    refresh_token_value = request.cookies.get("refresh_token")
+    if not refresh_token_value:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = decode_token(refresh_token_value)
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -102,6 +134,25 @@ def refresh_token(refresh_data: RefreshToken, db: Session = Depends(get_db)):
     access_token = create_access_token(subject=str(user.id))
     new_refresh_token = create_refresh_token(subject=str(user.id))
 
+    # Set new httpOnly cookies
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.SECURE_COOKIES,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=settings.SECURE_COOKIES,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+
     return {
         "access_token": access_token,
         "refresh_token": new_refresh_token,
@@ -110,13 +161,15 @@ def refresh_token(refresh_data: RefreshToken, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout():
+def logout(response: Response):
     """
     Logout endpoint.
-
-    Note: For stateless JWT, logout is handled client-side by removing tokens.
-    For additional security, implement token blacklisting with Redis.
+    Clears httpOnly cookies containing access and refresh tokens.
     """
+    # Clear cookies by setting them to expire immediately
+    response.delete_cookie(key="access_token", samesite="lax")
+    response.delete_cookie(key="refresh_token", samesite="lax")
+
     return {"message": "Successfully logged out"}
 
 
