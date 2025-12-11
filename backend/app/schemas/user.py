@@ -40,9 +40,25 @@ class UserInDBBase(UserBase):
 
 # Properties to return to client
 class User(UserInDBBase):
-    pass
+    is_deleted: Optional[bool] = None
+    deleted_at: Optional[datetime] = None
 
 
 # Properties stored in DB
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+
+# Admin schemas
+class UserRoleUpdate(BaseModel):
+    """Update user role"""
+    role: UserRole
+
+
+class UserStats(BaseModel):
+    """User statistics for admin dashboard"""
+    total_users: int
+    active_users: int
+    inactive_users: int
+    admin_users: int
+    deleted_users: int

@@ -44,3 +44,11 @@ export interface ProjectUpdate {
   title?: string
   description?: string
 }
+
+export interface UserStats {
+  total_users: number
+  active_users: number
+  inactive_users: number
+  admin_users: number
+  deleted_users: number
+}

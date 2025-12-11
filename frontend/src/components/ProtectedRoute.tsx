@@ -3,10 +3,11 @@ import { useAuth } from '@/hooks/useAuth'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  requireAdmin?: boolean
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, loading } = useAuth()
+export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
+  const { user, isAuthenticated, loading } = useAuth()
 
   if (loading) {
     return (
@@ -18,6 +19,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (requireAdmin && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>

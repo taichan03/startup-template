@@ -86,6 +86,14 @@ export function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">{user?.full_name || user?.email}</span>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Admin Dashboard
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"

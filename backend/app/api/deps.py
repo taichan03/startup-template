@@ -38,6 +38,14 @@ def get_current_user(
     if user is None:
         raise credentials_exception
 
+    # Check if user has been deleted
+    if user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account has been deleted",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user
 
 

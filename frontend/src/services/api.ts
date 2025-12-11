@@ -6,6 +6,7 @@ import type {
   TokenResponse,
   ProjectCreate,
   ProjectUpdate,
+  UserStats,
 } from '@/types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -163,6 +164,45 @@ class ApiClient {
 
   async deleteProject(id: number): Promise<void> {
     return this.request<void>(`/api/v1/projects/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Admin endpoints
+  async getUserStats(): Promise<UserStats> {
+    return this.request<UserStats>('/api/v1/admin/users/stats')
+  }
+
+  async getAllUsers(skip?: number, limit?: number, includeDeleted?: boolean): Promise<User[]> {
+    const params = new URLSearchParams()
+    if (skip !== undefined) params.append('skip', skip.toString())
+    if (limit !== undefined) params.append('limit', limit.toString())
+    if (includeDeleted) params.append('include_deleted', 'true')
+    const queryString = params.toString()
+    return this.request<User[]>(`/api/v1/admin/users${queryString ? `?${queryString}` : ''}`)
+  }
+
+  async deactivateUser(userId: number): Promise<User> {
+    return this.request<User>(`/api/v1/admin/users/${userId}/deactivate`, {
+      method: 'PUT',
+    })
+  }
+
+  async activateUser(userId: number): Promise<User> {
+    return this.request<User>(`/api/v1/admin/users/${userId}/activate`, {
+      method: 'PUT',
+    })
+  }
+
+  async changeUserRole(userId: number, role: 'admin' | 'user'): Promise<User> {
+    return this.request<User>(`/api/v1/admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    })
+  }
+
+  async deleteUser(userId: number): Promise<User> {
+    return this.request<User>(`/api/v1/admin/users/${userId}`, {
       method: 'DELETE',
     })
   }

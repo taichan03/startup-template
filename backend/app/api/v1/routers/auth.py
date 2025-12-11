@@ -46,6 +46,12 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User account has been deleted"
+        )
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +91,7 @@ def refresh_token(refresh_data: RefreshToken, db: Session = Depends(get_db)):
         )
 
     user = user_service.get_user(db, user_id=int(user_id))
-    if user is None or not user.is_active:
+    if user is None or user.is_deleted or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
