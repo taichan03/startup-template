@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Spinner, Alert } from '@/components/ui'
 
 export function OAuthCallback() {
   const [searchParams] = useSearchParams()
@@ -26,13 +27,15 @@ export function OAuthCallback() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="max-w-md w-full space-y-4 p-8">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <h3 className="text-lg font-medium text-red-800">Authentication Error</h3>
-            <p className="mt-2 text-sm text-red-700">{error}</p>
-            <p className="mt-2 text-sm text-red-600">Redirecting to login...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+        <div className="max-w-md w-full">
+          <Alert variant="error">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Authentication Error</h3>
+              <p>{error}</p>
+              <p className="text-sm">Redirecting to login...</p>
+            </div>
+          </Alert>
         </div>
       </div>
     )
@@ -40,9 +43,9 @@ export function OAuthCallback() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <p className="mt-4 text-lg text-gray-700">Completing sign in...</p>
+      <div className="text-center space-y-4">
+        <Spinner size="lg" />
+        <p className="text-lg text-gray-700 font-medium">Completing sign in...</p>
       </div>
     </div>
   )

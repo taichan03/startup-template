@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
+import { AuthLayout } from '@/components/layout'
+import { Input, Button, Alert, Divider } from '@/components/ui'
 
 export function Login() {
   const navigate = useNavigate()
@@ -27,87 +29,61 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+    <AuthLayout>
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back
           </h2>
+          <p className="text-gray-600">Sign in to your account</p>
         </div>
 
-        {/* Google Sign In */}
-        <div className="mt-6">
-          <GoogleSignInButton />
-        </div>
+        <GoogleSignInButton />
 
-        {/* Divider */}
-        <div className="relative mt-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">Or continue with email</span>
-          </div>
-        </div>
+        <Divider text="Or continue with email" />
 
-        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
-              {error}
-            </div>
+            <Alert variant="error">{error}</Alert>
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+          <Input
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
 
-          <div className="text-center">
-            <Link to="/signup" className="text-indigo-600 hover:text-indigo-500">
-              Don't have an account? Sign up
-            </Link>
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            loading={loading}
+          >
+            Sign in
+          </Button>
         </form>
+
+        <div className="text-center text-sm">
+          <span className="text-gray-600">Don't have an account? </span>
+          <Link to="/signup" className="text-orange-500 hover:text-orange-600 font-medium">
+            Sign up
+          </Link>
+        </div>
       </div>
-    </div>
+    </AuthLayout>
   )
 }
